@@ -67,8 +67,10 @@ type MessageKey =
   | "active"
   | "adoptSession"
   | "automationUnavailable"
+  | "boardTitle"
   | "clearPending"
   | "done"
+  | "emptyColumn"
   | "inProgress"
   | "limit"
   | "moveDone"
@@ -80,6 +82,8 @@ type MessageKey =
   | "prompt"
   | "queued"
   | "recentCards"
+  | "selectCard"
+  | "selected"
   | "openMain"
   | "openReview"
   | "startMain"
@@ -92,8 +96,10 @@ const messages: Record<"en" | "zh-CN", Record<MessageKey, string>> = {
     active: "Active",
     adoptSession: "Adopt discovered session",
     automationUnavailable: "Automation unavailable on this OpenChamber version",
+    boardTitle: "Loop Kanban",
     clearPending: "Clear pending after native inspection",
     done: "Done",
+    emptyColumn: "No cards in this column.",
     inProgress: "In progress",
     limit: "Limit",
     moveDone: "Move to Done",
@@ -105,6 +111,8 @@ const messages: Record<"en" | "zh-CN", Record<MessageKey, string>> = {
     prompt: "Prompt",
     queued: "Queued",
     recentCards: "Recent cards",
+    selectCard: "Select a card to see its actions.",
+    selected: "Selected",
     openMain: "Open Main",
     openReview: "Open Review",
     startMain: "Start Main",
@@ -116,8 +124,10 @@ const messages: Record<"en" | "zh-CN", Record<MessageKey, string>> = {
     active: "进行中",
     adoptSession: "认领已发现会话",
     automationUnavailable: "当前 OpenChamber 版本不支持自动化",
+    boardTitle: "Loop Kanban",
     clearPending: "原生检查后清除待处理",
     done: "已完成",
+    emptyColumn: "此列暂无卡片。",
     inProgress: "处理中",
     limit: "上限",
     moveDone: "移至已完成",
@@ -129,6 +139,8 @@ const messages: Record<"en" | "zh-CN", Record<MessageKey, string>> = {
     prompt: "任务说明",
     queued: "排队中",
     recentCards: "最近卡片",
+    selectCard: "选择卡片以查看可用操作。",
+    selected: "当前选中",
     openMain: "打开 Main",
     openReview: "打开 Review",
     startMain: "启动 Main",

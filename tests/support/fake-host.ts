@@ -102,6 +102,8 @@ type FakeSlot = { name: string };
 export const createFakeUiKit = (): UiKit & {
   mountCount: number;
   visibleText(name: string): string | undefined;
+  selectedId(name: string): string | null | undefined;
+  ariaLabel(name: string): string | undefined;
   isDisabled(name: string): boolean | undefined;
   isHidden(name: string): boolean | undefined;
   click(name: string): void;
@@ -110,6 +112,8 @@ export const createFakeUiKit = (): UiKit & {
   type(name: string, value: string): void;
 } => {
   const text = new Map<string, string>();
+  const selectedIds = new Map<string, string | null | undefined>();
+  const ariaLabels = new Map<string, string | undefined>();
   const disabled = new Map<string, boolean>();
   const hidden = new Map<string, boolean>();
   const buttons = new Map<string, () => void>();
@@ -137,6 +141,8 @@ export const createFakeUiKit = (): UiKit & {
       return mountCount;
     },
     visibleText: (name) => text.get(name),
+    selectedId: (name) => selectedIds.get(name),
+    ariaLabel: (name) => ariaLabels.get(name),
     isDisabled: (name) => disabled.get(name),
     isHidden: (name) => hidden.get(name),
     click: (name) => buttons.get(name)?.(),
@@ -169,7 +175,18 @@ export const createFakeUiKit = (): UiKit & {
     mountEmpty: (value, props: EmptyProps) => handle(value, props),
     mountList: (value, props: ListProps) => {
       listSelects.set(slot(value).name, props.onSelect);
-      return handle(value, props);
+      const name = slot(value).name;
+      const handleRef = handle(value, props);
+      selectedIds.set(name, props.selectedId);
+      ariaLabels.set(name, props.ariaLabel);
+      return {
+        update: (next: Partial<ListProps>) => {
+          if ("selectedId" in next) selectedIds.set(name, next.selectedId);
+          if (next.ariaLabel !== undefined) ariaLabels.set(name, next.ariaLabel);
+          handleRef.update(next);
+        },
+        dispose: handleRef.dispose,
+      };
     },
     mountSelect: (value, props: SelectProps) => {
       selects.set(slot(value).name, props.onChange);

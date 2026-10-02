@@ -2282,8 +2282,10 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       active: "Active",
       adoptSession: "Adopt discovered session",
       automationUnavailable: "Automation unavailable on this OpenChamber version",
+      boardTitle: "Loop Kanban",
       clearPending: "Clear pending after native inspection",
       done: "Done",
+      emptyColumn: "No cards in this column.",
       inProgress: "In progress",
       limit: "Limit",
       moveDone: "Move to Done",
@@ -2295,6 +2297,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       prompt: "Prompt",
       queued: "Queued",
       recentCards: "Recent cards",
+      selectCard: "Select a card to see its actions.",
+      selected: "Selected",
       openMain: "Open Main",
       openReview: "Open Review",
       startMain: "Start Main",
@@ -2306,8 +2310,10 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       active: "进行中",
       adoptSession: "认领已发现会话",
       automationUnavailable: "当前 OpenChamber 版本不支持自动化",
+      boardTitle: "Loop Kanban",
       clearPending: "原生检查后清除待处理",
       done: "已完成",
+      emptyColumn: "此列暂无卡片。",
       inProgress: "处理中",
       limit: "上限",
       moveDone: "移至已完成",
@@ -2319,6 +2325,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       prompt: "任务说明",
       queued: "排队中",
       recentCards: "最近卡片",
+      selectCard: "选择卡片以查看可用操作。",
+      selected: "当前选中",
       openMain: "打开 Main",
       openReview: "打开 Review",
       startMain: "启动 Main",
@@ -2346,12 +2354,15 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let emptySlot;
     let automationSlot;
     let bannerSlot;
+    let actionsSlot;
     const handles = [];
     let empty;
     let automationBanner;
     let banner;
     let project;
     let active2;
+    let boardTitle;
+    let selection2;
     let newCard;
     let startMain;
     let startReview;
@@ -2364,11 +2375,14 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let title;
     let prompt;
     const columns = new Map;
+    const actionSlots = new Map;
     const label = (key) => formatMessage(locale, key);
-    const columnCards = (status) => state.cards.filter((card) => card.status === status).map((card) => ({ id: card.id, title: card.title }));
+    const columnCards = (status) => state.cards.filter((card) => card.status === status);
     const render = () => {
       if (!mounted)
         return;
+      if (selectedCardId && !state.cards.some((card) => card.id === selectedCardId))
+        selectedCardId = null;
       empty?.update({ title: state.error ?? label("noProject") });
       ui.setHidden(emptySlot, !state.empty);
       if (automationBanner) {
@@ -2384,10 +2398,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         options: state.projects.map((item) => ({ id: item.id, label: item.name })),
         placeholder: label("noProject")
       });
+      boardTitle?.update({ text: label("boardTitle") });
       active2?.update({ label: `${label("active")}: ${state.active}/${state.limit} ${label("limit")}` });
       newCard?.update({ label: label("newCard"), disabled: !state.canStart || !state.onNewCard });
       const selected = state.cards.find((card) => card.id === selectedCardId);
       const pending = selected?.pendingStartRole != null;
+      selection2?.update({ text: selected ? `${label("selected")}: ${selected.title}` : label("selectCard") });
       startMain?.update({ label: label("startMain"), disabled: !state.canStart || pending || selected?.status !== "todo" || !state.onStartMain });
       startReview?.update({ label: label("startReview"), disabled: !state.canStart || pending || selected?.status !== "in_progress" || !state.onStartReview });
       moveDone?.update({ label: label("moveDone"), disabled: !state.canStart || pending || selected?.status !== "needs_review" || !state.onMoveDone });
@@ -2395,6 +2411,16 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       openReview?.update({ label: label("openReview"), disabled: !selected?.reviewSessionId || !state.onOpenReview });
       adoptSession?.update({ label: label("adoptSession"), disabled: !state.canStart || !selected?.pendingStartRole || !state.onAdoptSession });
       clearPending?.update({ label: label("clearPending"), disabled: !state.canStart || !selected?.pendingStartRole || !state.onClearPending });
+      const visibleActions = {
+        startMain: selected?.status === "todo" && !pending && !!state.onStartMain,
+        startReview: selected?.status === "in_progress" && !pending && !!state.onStartReview,
+        moveDone: selected?.status === "needs_review" && !pending && !!state.onMoveDone,
+        openMain: !!selected?.mainSessionId && !!state.onOpenMain,
+        openReview: !!selected?.reviewSessionId && !!state.onOpenReview,
+        adoptSession: pending && !!state.onAdoptSession,
+        clearPending: pending && !!state.onClearPending
+      };
+      actionSlots.forEach((slot, name) => ui.setHidden(slot, !visibleActions[name]));
       title?.update({ label: label("title") });
       prompt?.update({ label: label("prompt") });
       const names = {
@@ -2404,8 +2430,14 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         done: "done"
       };
       columns.forEach((column, status) => {
-        column.heading.update({ text: label(names[status]) });
-        column.list.update({ items: columnCards(status), emptyText: label("noProject") });
+        const cards = columnCards(status);
+        column.heading.update({ text: `${label(names[status])} · ${cards.length}` });
+        column.list.update({
+          items: cards.map(({ id, title: cardTitle }) => ({ id, title: cardTitle })),
+          selectedId: cards.some((card) => card.id === selectedCardId) ? selectedCardId : null,
+          emptyText: label("emptyColumn"),
+          ariaLabel: label(names[status])
+        });
       });
     };
     return {
@@ -2425,24 +2457,33 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         automationBanner = ui.mountBanner(automationSlot, { tone: "info", title: "" });
         banner = ui.mountBanner(bannerSlot, { tone: "warning", title: "" });
         ui.setHidden(bannerSlot, true);
+        boardTitle = ui.mountText(ui.createSlot(toolbar, "boardTitle"), { text: "" });
         project = ui.mountSelect(ui.createSlot(toolbar, "project"), { value: null, options: [], onChange: (projectId) => state.onSelectProject?.(projectId) });
         active2 = ui.mountBadge(ui.createSlot(toolbar, "active"), { label: "" });
         newCard = ui.mountButton(ui.createSlot(toolbar, "newCard"), { label: "", onClick: () => state.onNewCard?.(draft) });
-        startMain = ui.mountButton(ui.createSlot(toolbar, "startMain"), { label: "", onClick: () => selectedCardId && state.onStartMain?.(selectedCardId) });
-        startReview = ui.mountButton(ui.createSlot(toolbar, "startReview"), { label: "", onClick: () => selectedCardId && state.onStartReview?.(selectedCardId) });
-        moveDone = ui.mountButton(ui.createSlot(toolbar, "moveDone"), { label: "", onClick: () => selectedCardId && state.onMoveDone?.(selectedCardId) });
-        openMain = ui.mountButton(ui.createSlot(toolbar, "openMain"), { label: "", onClick: () => {
+        actionsSlot = ui.createSlot(root, "actions");
+        selection2 = ui.mountText(ui.createSlot(actionsSlot, "selection"), { text: "" });
+        const actionControls = ui.createSlot(actionsSlot, "controls");
+        const mountAction = (name) => {
+          const slot = ui.createSlot(actionControls, name);
+          actionSlots.set(name, slot);
+          return slot;
+        };
+        startMain = ui.mountButton(mountAction("startMain"), { label: "", onClick: () => selectedCardId && state.onStartMain?.(selectedCardId) });
+        startReview = ui.mountButton(mountAction("startReview"), { label: "", onClick: () => selectedCardId && state.onStartReview?.(selectedCardId) });
+        moveDone = ui.mountButton(mountAction("moveDone"), { label: "", onClick: () => selectedCardId && state.onMoveDone?.(selectedCardId) });
+        openMain = ui.mountButton(mountAction("openMain"), { label: "", onClick: () => {
           const sessionId = state.cards.find((card) => card.id === selectedCardId)?.mainSessionId;
           if (sessionId)
             state.onOpenMain?.(sessionId);
         } });
-        openReview = ui.mountButton(ui.createSlot(toolbar, "openReview"), { label: "", onClick: () => {
+        openReview = ui.mountButton(mountAction("openReview"), { label: "", onClick: () => {
           const sessionId = state.cards.find((card) => card.id === selectedCardId)?.reviewSessionId;
           if (sessionId)
             state.onOpenReview?.(sessionId);
         } });
-        adoptSession = ui.mountButton(ui.createSlot(toolbar, "adoptSession"), { label: "", onClick: () => selectedCardId && state.onAdoptSession?.(selectedCardId) });
-        clearPending = ui.mountButton(ui.createSlot(toolbar, "clearPending"), { label: "", onClick: () => selectedCardId && state.onClearPending?.(selectedCardId) });
+        adoptSession = ui.mountButton(mountAction("adoptSession"), { label: "", onClick: () => selectedCardId && state.onAdoptSession?.(selectedCardId) });
+        clearPending = ui.mountButton(mountAction("clearPending"), { label: "", onClick: () => selectedCardId && state.onClearPending?.(selectedCardId) });
         title = ui.mountTextField(ui.createSlot(form, "title"), { value: draft.title, onChange: (value) => {
           draft = { ...draft, title: value };
         } });
@@ -2459,7 +2500,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
           columns.set(status, { heading, list });
           handles.push(heading, list);
         }
-        handles.push(empty, automationBanner, banner, project, active2, newCard, startMain, startReview, moveDone, openMain, openReview, adoptSession, clearPending, title, prompt);
+        handles.push(empty, automationBanner, banner, project, active2, boardTitle, selection2, newCard, startMain, startReview, moveDone, openMain, openReview, adoptSession, clearPending, title, prompt);
         render();
       },
       applyReady: (context) => {

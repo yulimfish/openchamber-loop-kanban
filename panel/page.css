@@ -1,0 +1,196 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--oc-bg);
+  color: var(--oc-fg);
+}
+
+#app {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.85rem;
+  overflow: hidden;
+  background: var(--oc-bg);
+  color: var(--oc-fg);
+}
+
+[data-loop-kanba-slot][hidden] {
+  display: none !important;
+}
+
+#app > [data-loop-kanba-slot="toolbar"] {
+  display: grid;
+  grid-template-columns: auto minmax(12rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+[data-loop-kanba-slot="boardTitle"] {
+  font-size: 1.15rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+[data-loop-kanba-slot="project"] {
+  min-width: 0;
+}
+
+[data-loop-kanba-slot="active"] {
+  white-space: nowrap;
+}
+
+#app > [data-loop-kanba-slot="draft"] {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.85fr) minmax(18rem, 2fr);
+  align-items: start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+[data-loop-kanba-slot="title"],
+[data-loop-kanba-slot="prompt"] {
+  min-width: 0;
+}
+
+#app > [data-loop-kanba-slot="actions"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  background: var(--oc-muted-surface);
+}
+
+[data-loop-kanba-slot="selection"] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-loop-kanba-slot="controls"] {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+#app > [data-loop-kanba-slot="board"] {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-loop-kanba-slot="todo"],
+[data-loop-kanba-slot="in_progress"],
+[data-loop-kanba-slot="needs_review"],
+[data-loop-kanba-slot="done"] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.45rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  background: var(--oc-muted-surface);
+}
+
+[data-loop-kanba-slot$="Heading"] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+[data-loop-kanba-slot$="Cards"] {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 760px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+  }
+
+  #app {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  #app > [data-loop-kanba-slot="toolbar"] {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  [data-loop-kanba-slot="boardTitle"] {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  [data-loop-kanba-slot="project"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  [data-loop-kanba-slot="active"] {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  [data-loop-kanba-slot="newCard"] {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  #app > [data-loop-kanba-slot="board"] {
+    flex: 0 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  [data-loop-kanba-slot="todo"],
+  [data-loop-kanba-slot="in_progress"],
+  [data-loop-kanba-slot="needs_review"],
+  [data-loop-kanba-slot="done"] {
+    min-height: 12rem;
+  }
+}
+
+@media (max-width: 520px) {
+  #app > [data-loop-kanba-slot="draft"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #app > [data-loop-kanba-slot="actions"] {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  [data-loop-kanba-slot="controls"] {
+    width: 100%;
+  }
+}

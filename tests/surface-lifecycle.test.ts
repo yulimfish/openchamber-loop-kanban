@@ -73,6 +73,71 @@ test("page loads its persisted board and creates a card from the draft", async (
   dispose();
 });
 
+test("page shows which card is selected in the keyboard list", () => {
+  const ui = createFakeUiKit();
+  const page = createPageSurface(ui);
+  page.mount();
+  page.update({
+    projects: [{ id: "project-a", name: "A" }],
+    activeProjectId: "project-a",
+    cards: [{ id: "todo-1", title: "Task one", status: "todo" }],
+    empty: false,
+  });
+
+  expect(ui.selectedId("todoCards")).toBeNull();
+  expect(ui.ariaLabel("todoCards")).toBe("To do");
+  ui.selectCard("todo-1");
+
+  expect(ui.selectedId("todoCards")).toBe("todo-1");
+  expect(ui.visibleText("selection")).toBe("Selected: Task one");
+});
+
+test("page only shows actions available for the selected card", () => {
+  const ui = createFakeUiKit();
+  const page = createPageSurface(ui);
+  page.mount();
+  page.update({
+    projects: [{ id: "project-a", name: "A" }],
+    activeProjectId: "project-a",
+    cards: [
+      { id: "todo-1", title: "Todo", status: "todo" },
+      { id: "doing-1", title: "Doing", status: "in_progress", mainSessionId: "main-1" },
+      { id: "review-1", title: "Review", status: "needs_review", mainSessionId: "main-2", reviewSessionId: "review-2" },
+      { id: "pending-1", title: "Pending", status: "todo", pendingStartRole: "main" },
+    ],
+    empty: false,
+    canStart: true,
+    onStartMain: () => undefined,
+    onStartReview: () => undefined,
+    onMoveDone: () => undefined,
+    onOpenMain: () => undefined,
+    onOpenReview: () => undefined,
+    onAdoptSession: () => undefined,
+    onClearPending: () => undefined,
+  });
+
+  expect(ui.isHidden("startMain")).toBe(true);
+  ui.selectCard("todo-1");
+  expect(ui.isHidden("startMain")).toBe(false);
+  expect(ui.isHidden("startReview")).toBe(true);
+  expect(ui.isHidden("moveDone")).toBe(true);
+
+  ui.selectCard("doing-1");
+  expect(ui.isHidden("startMain")).toBe(true);
+  expect(ui.isHidden("startReview")).toBe(false);
+  expect(ui.isHidden("openMain")).toBe(false);
+  expect(ui.isHidden("moveDone")).toBe(true);
+
+  ui.selectCard("review-1");
+  expect(ui.isHidden("moveDone")).toBe(false);
+  expect(ui.isHidden("openReview")).toBe(false);
+
+  ui.selectCard("pending-1");
+  expect(ui.isHidden("startMain")).toBe(true);
+  expect(ui.isHidden("adoptSession")).toBe(false);
+  expect(ui.isHidden("clearPending")).toBe(false);
+});
+
 test("page bootstrap applies the Host ready theme before it updates the surface", async () => {
   const host = createFakeHost();
   const page = createPageSurface(createFakeUiKit());
