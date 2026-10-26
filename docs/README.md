@@ -1,5 +1,7 @@
 # openchamber-loop-kanban
 
+> **项目状态：未完成，已废弃。** 社区已有类似的更优秀项目，本项目将归档。
+
 `openchamber-loop-kanban` 是一个 OpenChamber 扩展，不是独立桌面应用。它在右侧 rail 提供轻量看板面板，并由用户从 **Extension pages** 打开完整看板页。
 
 所有 Agent、worktree、会话、Chat、Context、Diff、终端和 Preview 均由 OpenChamber 原生功能运行与展示。扩展只通过公开的 `@openchamber/sdk` Host API 与 UI kit 接入。
